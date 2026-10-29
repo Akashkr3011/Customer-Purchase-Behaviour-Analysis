@@ -1,0 +1,6 @@
+{
+  "name": "Customer Analytics: Purchase Behaviour (DA-002)",
+  "description": "Customer purchase behaviour analysis workbench exploring transaction patterns, spend segmentation, repeat purchase dynamics, and exportable Jupyter/Pandas workflows.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
