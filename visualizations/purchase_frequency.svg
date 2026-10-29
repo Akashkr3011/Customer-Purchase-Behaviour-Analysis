@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 400" width="100%" height="100%" style="background:#ffffff; font-family:sans-serif;">
+  <text x="350.0" y="30" text-anchor="middle" font-size="16" font-weight="bold" fill="#0f172a">Customer Purchase Frequency Distribution</text>
+  <line x1="80" y1="340" x2="670" y2="340" stroke="#cbd5e1" stroke-width="1.5" />
+  <line x1="80" y1="50" x2="80" y2="340" stroke="#cbd5e1" stroke-width="1.5" />
+  <text x="65" y="195.0" transform="rotate(-90 65 195.0)" text-anchor="middle" font-size="12" fill="#64748b">Number of Customers</text>
+  <rect x="136.7" y="50.0" width="50.0" height="290.0" rx="3" fill="#2563eb" />
+  <text x="161.7" y="44.0" text-anchor="middle" font-size="10" font-weight="bold" fill="#1e293b">135</text>
+  <text x="161.7" y="358.0" text-anchor="middle" font-size="11" fill="#475569">1 Orders</text>
+  <rect x="243.3" y="254.1" width="50.0" height="85.9" rx="3" fill="#2563eb" />
+  <text x="268.3" y="248.1" text-anchor="middle" font-size="10" font-weight="bold" fill="#1e293b">40</text>
+  <text x="268.3" y="358.0" text-anchor="middle" font-size="11" fill="#475569">2 Orders</text>
+  <rect x="350.0" y="267.0" width="50.0" height="73.0" rx="3" fill="#2563eb" />
+  <text x="375.0" y="261.0" text-anchor="middle" font-size="10" font-weight="bold" fill="#1e293b">34</text>
+  <text x="375.0" y="358.0" text-anchor="middle" font-size="11" fill="#475569">3 Orders</text>
+  <rect x="456.7" y="320.7" width="50.0" height="19.3" rx="3" fill="#2563eb" />
+  <text x="481.7" y="314.7" text-anchor="middle" font-size="10" font-weight="bold" fill="#1e293b">9</text>
+  <text x="481.7" y="358.0" text-anchor="middle" font-size="11" fill="#475569">4 Orders</text>
+  <rect x="563.3" y="275.6" width="50.0" height="64.4" rx="3" fill="#2563eb" />
+  <text x="588.3" y="269.6" text-anchor="middle" font-size="10" font-weight="bold" fill="#1e293b">30</text>
+  <text x="588.3" y="358.0" text-anchor="middle" font-size="11" fill="#475569">5+ Orders</text>
+</svg>

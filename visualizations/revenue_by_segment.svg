@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 400" width="100%" height="100%" style="background:#ffffff; font-family:sans-serif;">
+  <text x="350.0" y="30" text-anchor="middle" font-size="16" font-weight="bold" fill="#0f172a">Revenue by Customer Segment (₹ INR)</text>
+  <line x1="80" y1="340" x2="670" y2="340" stroke="#cbd5e1" stroke-width="1.5" />
+  <line x1="80" y1="50" x2="80" y2="340" stroke="#cbd5e1" stroke-width="1.5" />
+  <text x="65" y="195.0" transform="rotate(-90 65 195.0)" text-anchor="middle" font-size="12" fill="#64748b">Gross Revenue (₹)</text>
+  <rect x="190.0" y="329.4" width="50.0" height="10.6" rx="3" fill="#2563eb" />
+  <text x="215.0" y="323.4" text-anchor="middle" font-size="10" font-weight="bold" fill="#1e293b">₹106,941</text>
+  <text x="215.0" y="358.0" text-anchor="middle" font-size="11" fill="#475569">Low Spend</text>
+  <rect x="350.0" y="187.3" width="50.0" height="152.7" rx="3" fill="#2563eb" />
+  <text x="375.0" y="181.3" text-anchor="middle" font-size="10" font-weight="bold" fill="#1e293b">₹1,544,252</text>
+  <text x="375.0" y="358.0" text-anchor="middle" font-size="11" fill="#475569">Medium Spend</text>
+  <rect x="510.0" y="50.0" width="50.0" height="290.0" rx="3" fill="#2563eb" />
+  <text x="535.0" y="44.0" text-anchor="middle" font-size="10" font-weight="bold" fill="#1e293b">₹2,932,745</text>
+  <text x="535.0" y="358.0" text-anchor="middle" font-size="11" fill="#475569">High Spend</text>
+</svg>

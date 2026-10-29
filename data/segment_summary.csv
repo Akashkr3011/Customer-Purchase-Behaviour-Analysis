@@ -1,0 +1,4 @@
+spend_segment,customer_count,customer_share_pct,total_revenue,revenue_share_pct,avg_spend_per_customer,avg_orders_per_customer,average_order_value,repeat_buyer_rate_pct
+Low Spend,40,16.13,106941.0,2.33,2673.53,1.02,2608.32,2.5
+Medium Spend,131,52.82,1544252.0,33.69,11788.18,1.44,8170.65,30.53
+High Spend,77,31.05,2932745.0,63.98,38087.6,4.09,9310.3,93.51

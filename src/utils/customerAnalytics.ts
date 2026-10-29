@@ -7,6 +7,9 @@ import {
   OrderDistribution,
   ThresholdConfig,
   SpendSegment,
+  MonthlyRevenueTrend,
+  SpendDistributionBucket,
+  CrossSellPair,
 } from '../types/analytics';
 
 export function calculateCustomerSummaries(
@@ -20,8 +23,10 @@ export function calculateCustomerSummaries(
     string,
     {
       transactions: CleanTransaction[];
-      orderDates: Set<string>;
+      orderIds: Set<string>;
       totalSpend: number;
+      totalQuantity: number;
+      uniqueProducts: Set<string>;
       categorySpend: Map<string, number>;
       productCounts: Map<string, number>;
     }
@@ -38,8 +43,10 @@ export function calculateCustomerSummaries(
     if (!cust) {
       cust = {
         transactions: [],
-        orderDates: new Set<string>(),
+        orderIds: new Set<string>(),
         totalSpend: 0,
+        totalQuantity: 0,
+        uniqueProducts: new Set<string>(),
         categorySpend: new Map<string, number>(),
         productCounts: new Map<string, number>(),
       };
@@ -47,8 +54,13 @@ export function calculateCustomerSummaries(
     }
 
     cust.transactions.push(t);
-    cust.orderDates.add(t.date); // Distinct purchase dates count as distinct orders/shopping trips
+    // Distinct order identifier (using order_id, or transaction date as order trip fallback)
+    const effectiveOrderId = t.order_id && t.order_id.trim() !== '' ? t.order_id : t.date;
+    cust.orderIds.add(effectiveOrderId);
+
     cust.totalSpend += t.total_amount;
+    cust.totalQuantity += t.quantity;
+    cust.uniqueProducts.add(t.product_name);
 
     cust.categorySpend.set(
       t.category,
@@ -64,7 +76,6 @@ export function calculateCustomerSummaries(
   const summaries: CustomerSummary[] = [];
 
   customerMap.forEach((data, customerId) => {
-    // Sort transactions chronologically
     data.transactions.sort((a, b) => a.timestamp - b.timestamp);
 
     const firstDate = data.transactions[0].date;
@@ -76,12 +87,12 @@ export function calculateCustomerSummaries(
       Math.round((maxDatasetDate - lastTx.timestamp) / (1000 * 60 * 60 * 24))
     );
 
-    const orderCount = data.orderDates.size;
+    const orderCount = data.orderIds.size;
     const totalSpend = Number(data.totalSpend.toFixed(2));
-    const aov = Number((totalSpend / (orderCount || 1)).toFixed(2));
+    const aov = Number((totalSpend / Math.max(1, orderCount)).toFixed(2));
     const isRepeatBuyer = orderCount >= 2;
 
-    // Segment assignment with documented thresholds
+    // Configurable spend thresholds
     let spendSegment: SpendSegment = 'Low Spend';
     if (totalSpend >= thresholds.highThreshold) {
       spendSegment = 'High Spend';
@@ -89,7 +100,10 @@ export function calculateCustomerSummaries(
       spendSegment = 'Medium Spend';
     }
 
-    // Top category
+    // Identify customers with high historical spending who have not purchased recently (> 90 days)
+    const isInactiveHighSpender = totalSpend >= thresholds.highThreshold && recencyDays >= 90;
+
+    // Primary category
     let topCategory = 'General';
     let maxCatSpend = -1;
     data.categorySpend.forEach((spend, cat) => {
@@ -109,13 +123,13 @@ export function calculateCustomerSummaries(
       }
     });
 
-    const productsBought = Array.from(data.productCounts.keys());
-
     summaries.push({
       customer_id: customerId,
       order_count: orderCount,
       total_spend: totalSpend,
       average_order_value: aov,
+      total_quantity: data.totalQuantity,
+      unique_products_count: data.uniqueProducts.size,
       first_purchase_date: firstDate,
       last_purchase_date: lastDate,
       recency_days: recencyDays,
@@ -123,13 +137,13 @@ export function calculateCustomerSummaries(
       spend_segment: spendSegment,
       primary_category: topCategory,
       top_product: topProduct,
-      products_bought: productsBought,
+      products_bought: Array.from(data.uniqueProducts),
+      is_inactive_high_spender: isInactiveHighSpender,
     });
   });
 
   // Sort descending by total spend by default
   summaries.sort((a, b) => b.total_spend - a.total_spend);
-
   return summaries;
 }
 
@@ -208,14 +222,133 @@ export function calculateProductMetrics(
       total_revenue: Number(val.revenue.toFixed(2)),
       unique_buyers: uniqueBuyers,
       repeat_buyer_count: repeatBuyerCount,
-      repeat_rate: uniqueBuyers > 0 ? Number(((repeatBuyerCount / uniqueBuyers) * 100).toFixed(1)) : 0,
+      repeat_rate:
+        uniqueBuyers > 0 ? Number(((repeatBuyerCount / uniqueBuyers) * 100).toFixed(1)) : 0,
       avg_price: val.units > 0 ? Number((val.revenue / val.units).toFixed(2)) : 0,
     });
   });
 
-  // Sort by total revenue descending
   results.sort((a, b) => b.total_revenue - a.total_revenue);
   return results;
+}
+
+export function calculateMonthlyTrends(
+  transactions: CleanTransaction[]
+): MonthlyRevenueTrend[] {
+  const monthMap = new Map<
+    string,
+    { revenue: number; orders: Set<string>; customers: Set<string> }
+  >();
+
+  for (const t of transactions) {
+    const monthKey = t.date.substring(0, 7); // YYYY-MM
+    let entry = monthMap.get(monthKey);
+    if (!entry) {
+      entry = { revenue: 0, orders: new Set(), customers: new Set() };
+      monthMap.set(monthKey, entry);
+    }
+    entry.revenue += t.total_amount;
+    entry.orders.add(t.order_id || t.transaction_id);
+    entry.customers.add(t.customer_id);
+  }
+
+  const sortedMonths = Array.from(monthMap.keys()).sort();
+  const monthNames = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
+  return sortedMonths.map((m) => {
+    const [year, month] = m.split('-');
+    const label = `${monthNames[parseInt(month, 10) - 1]} ${year.substring(2)}`;
+    const data = monthMap.get(m)!;
+    return {
+      month: m,
+      label,
+      revenue: Number(data.revenue.toFixed(2)),
+      orders: data.orders.size,
+      unique_customers: data.customers.size,
+    };
+  });
+}
+
+export function calculateSpendDistribution(
+  summaries: CustomerSummary[]
+): SpendDistributionBucket[] {
+  const buckets = [
+    { bucket: '< ₹2,500', min: 0, max: 2500, count: 0, revenue: 0 },
+    { bucket: '₹2.5k - ₹5k', min: 2500, max: 5000, count: 0, revenue: 0 },
+    { bucket: '₹5k - ₹10k', min: 5000, max: 10000, count: 0, revenue: 0 },
+    { bucket: '₹10k - ₹20k', min: 10000, max: 20000, count: 0, revenue: 0 },
+    { bucket: '₹20k - ₹35k', min: 20000, max: 35000, count: 0, revenue: 0 },
+    { bucket: '₹35k+', min: 35000, max: 999999999, count: 0, revenue: 0 },
+  ];
+
+  const total = summaries.length || 1;
+  summaries.forEach((c) => {
+    for (const b of buckets) {
+      if (c.total_spend >= b.min && c.total_spend < b.max) {
+        b.count++;
+        b.revenue += c.total_spend;
+        break;
+      }
+    }
+  });
+
+  return buckets.map((b) => ({
+    ...b,
+    percentage: Number(((b.count / total) * 100).toFixed(1)),
+    revenue: Number(b.revenue.toFixed(2)),
+  }));
+}
+
+export function calculateCrossSellPairs(
+  transactions: CleanTransaction[]
+): CrossSellPair[] {
+  // Find products purchased by the same customer
+  const customerProducts = new Map<string, Set<string>>();
+  for (const t of transactions) {
+    if (!customerProducts.has(t.customer_id)) {
+      customerProducts.set(t.customer_id, new Set());
+    }
+    customerProducts.get(t.customer_id)!.add(t.product_name);
+  }
+
+  const pairCounts = new Map<string, { a: string; b: string; count: number }>();
+  customerProducts.forEach((prods) => {
+    const list = Array.from(prods);
+    for (let i = 0; i < list.length; i++) {
+      for (let j = i + 1; j < list.length; j++) {
+        const [a, b] = [list[i], list[j]].sort();
+        const key = `${a}|||${b}`;
+        const curr = pairCounts.get(key) || { a, b, count: 0 };
+        curr.count++;
+        pairCounts.set(key, curr);
+      }
+    }
+  });
+
+  const totalCust = customerProducts.size || 1;
+  const pairs = Array.from(pairCounts.values())
+    .map((p) => ({
+      product_a: p.a,
+      product_b: p.b,
+      co_occurrence_count: p.count,
+      confidence_pct: Number(((p.count / totalCust) * 100).toFixed(1)),
+    }))
+    .sort((a, b) => b.co_occurrence_count - a.co_occurrence_count);
+
+  return pairs.slice(0, 5);
 }
 
 export function calculateRepeatPurchaseAnalysis(
@@ -232,7 +365,7 @@ export function calculateRepeatPurchaseAnalysis(
   const totalRevenue = summaries.reduce((acc, c) => acc + c.total_spend, 0);
   const repeatRevenue = repeatBuyers.reduce((acc, c) => acc + c.total_spend, 0);
   const oneTimeRevenue = oneTimeBuyers.reduce((acc, c) => acc + c.total_spend, 0);
-  const repeatRevenueShare = Number(((repeatRevenue / (totalRevenue || 1)) * 100).toFixed(1));
+  const repeatRevenueShare = Number(((repeatRevenue / Math.max(1, totalRevenue)) * 100).toFixed(1));
 
   // Order distribution (1, 2, 3, 4, 5+)
   const distBuckets: { [key: number]: { count: number; revenue: number } } = {
@@ -258,7 +391,7 @@ export function calculateRepeatPurchaseAnalysis(
     total_revenue: Number(distBuckets[k].revenue.toFixed(2)),
   }));
 
-  // Inter-purchase interval (Days to 2nd purchase)
+  // Inter-purchase interval (Days between distinct orders)
   const custOrderDates = new Map<string, number[]>();
   for (const t of transactions) {
     if (!custOrderDates.has(t.customer_id)) {
@@ -272,7 +405,9 @@ export function calculateRepeatPurchaseAnalysis(
     const uniqueSorted = Array.from(new Set(timestamps)).sort((a, b) => a - b);
     if (uniqueSorted.length >= 2) {
       const diffDays = Math.round((uniqueSorted[1] - uniqueSorted[0]) / (1000 * 60 * 60 * 24));
-      daysToSecondPurchase.push(diffDays);
+      if (diffDays >= 0) {
+        daysToSecondPurchase.push(diffDays);
+      }
     }
   });
 
@@ -300,9 +435,10 @@ export function calculateRepeatPurchaseAnalysis(
     percentage: Number(((b.count / totalSecondPurchases) * 100).toFixed(1)),
   }));
 
-  const avgDaysBetween = daysToSecondPurchase.length > 0
-    ? Math.round(daysToSecondPurchase.reduce((a, b) => a + b, 0) / daysToSecondPurchase.length)
-    : 0;
+  const avgDaysBetween =
+    daysToSecondPurchase.length > 0
+      ? Math.round(daysToSecondPurchase.reduce((a, b) => a + b, 0) / daysToSecondPurchase.length)
+      : 0;
 
   return {
     repeatBuyerCount,
