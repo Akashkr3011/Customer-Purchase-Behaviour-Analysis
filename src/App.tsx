@@ -19,7 +19,6 @@ import { PopularProductsSection } from './components/PopularProductsSection';
 import { CustomerSummaryTable } from './components/CustomerSummaryTable';
 import { PythonNotebookView } from './components/PythonNotebookView';
 import { ActionableInsights } from './components/ActionableInsights';
-import { PresentationDeckView } from './components/PresentationDeckView';
 import { DataCleaningModal } from './components/DataCleaningModal';
 import { CustomerDetailModal } from './components/CustomerDetailModal';
 import { UploadModal } from './components/UploadModal';
@@ -30,7 +29,6 @@ import {
   Package,
   Users,
   Code2,
-  Presentation,
   CheckCircle2,
   UploadCloud,
   RefreshCw,
@@ -159,7 +157,6 @@ export default function App() {
     { id: 'products', label: 'Popular Products', icon: Package },
     { id: 'customers', label: 'Customer Summary', icon: Users },
     { id: 'notebook', label: 'Python / Jupyter', icon: Code2 },
-    { id: 'presentation', label: 'PPT Slide Deck', icon: Presentation },
   ];
 
   return (
@@ -310,18 +307,6 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setActiveTab('presentation')}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
-                activeTab === 'presentation'
-                  ? 'bg-slate-900 text-white'
-                  : 'text-slate-700 bg-blue-50 border border-blue-200 hover:bg-blue-100'
-              }`}
-            >
-              <Presentation className="w-3.5 h-3.5 text-blue-600" />
-              <span>PPT Deck</span>
-            </button>
-
             <button
               onClick={() => setIsUploadModalOpen(true)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors cursor-pointer shadow-xs"
@@ -482,22 +467,6 @@ export default function App() {
                 summaries={summaries}
                 segmentMetrics={segmentMetrics}
                 topProducts={productMetrics}
-              />
-            </div>
-          )}
-
-          {/* TAB 7: PPT SLIDE DECK */}
-          {activeTab === 'presentation' && (
-            <div className="space-y-8">
-              <PresentationDeckView
-                thresholds={thresholds}
-                report={report}
-                summaries={summaries}
-                segmentMetrics={segmentMetrics}
-                topProducts={productMetrics}
-                repeatRate={repeatAnalysis.repeatRate}
-                repeatRevenueShare={repeatAnalysis.repeatRevenueShare}
-                avgDaysBetween={repeatAnalysis.avgDaysBetween}
               />
             </div>
           )}

@@ -91,16 +91,6 @@ export const TopNav: React.FC<TopNavProps> = ({
           >
             Python Notebook
           </button>
-          <button
-            onClick={() => setActiveTab('presentation')}
-            className={`whitespace-nowrap shrink-0 transition-colors ${
-              activeTab === 'presentation'
-                ? 'text-slate-900 font-semibold border-b-2 border-slate-900 pb-0.5'
-                : 'hover:text-slate-900'
-            }`}
-          >
-            PPT Deck
-          </button>
         </nav>
 
         {/* Zone 3: Primary Action & Clean Audit */}

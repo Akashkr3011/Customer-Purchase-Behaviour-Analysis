@@ -114,7 +114,7 @@ The notebook contains 15 comprehensive sections:
 ## 5. Web Application Features
 
 The React application delivers a responsive dashboard:
-- **Navigation Modes**: Sidebar and header navigation across Overview, Spending Segmentation, Repeat Analysis, Popular Products, Customer Table, Python Notebook, and PPT Presentation Deck.
+- **Navigation Modes**: Sidebar and header navigation across Overview, Spending Segmentation, Repeat Analysis, Popular Products, Customer Table, and Python Notebook.
 - **Interactive Multi-Filter Bar**:
   - Filter transactions by **Date Range** (Start Date to End Date).
   - Filter by **Product** (All or individual products).
